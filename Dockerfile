@@ -1,31 +1,45 @@
-# 阶段一：依赖安装与构建
+# ==========================================
+# 阶段一：构建阶段 (使用 Node.js 编译打包)
+# ==========================================
 FROM node:20-alpine AS builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制子目录中的 package.json 和 lock 文件
+# 1. 复制依赖描述文件
 COPY all-model-chat/package*.json ./
 
-# 安装依赖
+# 2. 安装依赖
 RUN npm install
 
-# 复制子目录中的全部源码
+# 3. 复制全部源代码
 COPY all-model-chat/ ./
 
-# 执行构建（如果是 Next.js 项目，会生成 .next 产物）
+# 4. 执行 Vite 打包（产物会默认生成在 /app/dist 目录下）
 RUN npm run build
 
-# 阶段二：运行环境
-FROM node:20-alpine AS runner
+# ==========================================
+# 阶段二：运行阶段 (使用轻量级 Nginx 提供服务)
+# ==========================================
+FROM nginx:alpine AS runner
 
-WORKDIR /app
+# 1. 把 Nginx 默认的配置文件删掉，准备写入支持前端单页应用(SPA)的新配置
+RUN rm /etc/nginx/conf.d/default.conf
 
-# 从构建阶段复制所有文件（包含 node_modules 和构建产物）
-COPY --from=builder /app ./
+# 2. 写入 Nginx 配置（重点：try_files 解决前端路由刷新 404 的问题）
+RUN echo "server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html index.htm; \
+        try_files \$uri \$uri/ /index.html; \
+    } \
+}" > /etc/nginx/conf.d/default.conf
 
-# 暴露默认端口 (一般是 3000)
+# 3. 从构建阶段把打包好的静态资源复制到 Nginx 的网页目录
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 4. 暴露 Nginx 默认的 80 端口
 EXPOSE 5173
 
-# 启动服务
-CMD ["npm", "start"]
+# 5. 启动 Nginx
+CMD ["nginx", "-g", "daemon off;"]
