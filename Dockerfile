@@ -39,7 +39,7 @@ RUN echo "server { \
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 4. 暴露 Nginx 默认的 80 端口
-EXPOSE 5173
+EXPOSE 80
 
 # 5. 启动 Nginx
 CMD ["nginx", "-g", "daemon off;"]
