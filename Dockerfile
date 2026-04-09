@@ -6,13 +6,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # 1. 复制依赖描述文件
-COPY all-model-chat/package*.json ./
+COPY package*.json ./
 
 # 2. 安装依赖
 RUN npm install
 
 # 3. 复制全部源代码
-COPY all-model-chat/ ./
+COPY . ./
 
 # 4. 执行 Vite 打包（产物会默认生成在 /app/dist 目录下）
 RUN npm run build
