@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 2. 安装依赖
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # 3. 复制全部源代码
 COPY . ./
