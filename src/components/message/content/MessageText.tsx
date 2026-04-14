@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { translations } from '../../../utils/appUtils';
-import { MarkdownRenderer } from '../MarkdownRenderer';
+import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
 import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
 import { isLikelyHtml } from '../../../utils/codeUtils';
@@ -41,26 +41,23 @@ export const MessageText: React.FC<MessageTextProps> = ({
 }) => {
     const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
     const isLoading = message.isLoading ?? false;
-    const isStreamingModelResponse = isLoading && message.role === 'model';
-    const shouldAutoFullscreenHtml = appSettings.autoFullscreenHtml ?? true;
-    const hideThinkingInContext = appSettings.hideThinkingInContext ?? false;
     
     // Subscribe to live stream updates if loading
-    const { streamContent, streamThoughts } = useMessageStream(message.id, isStreamingModelResponse);
+    const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
     
     // Use streamed content if available, otherwise fall back to persisted content
     const effectiveContent = streamContent || content;
     const effectiveThoughts = streamThoughts || thoughts;
 
     // Apply smooth streaming effect only when loading and for model messages
-    const shouldSmooth = isStreamingModelResponse;
+    const shouldSmooth = isLoading && message.role === 'model';
     const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
 
     // Auto Fullscreen HTML Logic
     const prevIsLoadingRef = useRef(isLoading);
     useEffect(() => {
         if (prevIsLoadingRef.current && !isLoading) {
-            if (shouldAutoFullscreenHtml && message.role === 'model' && effectiveContent) {
+            if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
                 const regex = /```html\s*([\s\S]*?)\s*```/m;
                 const match = effectiveContent.match(regex);
                 if (match && match[1]) {
@@ -75,7 +72,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
             }
         }
         prevIsLoadingRef.current = isLoading;
-    }, [effectiveContent, isLoading, message.role, onOpenHtmlPreview, shouldAutoFullscreenHtml]);
+    }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
 
     // Only show the primary thinking indicator (spinner) if:
     // 1. It is loading
@@ -114,7 +111,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
               />
             ) : effectiveContent ? (
                 <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
-                    <MarkdownRenderer
+                    <LazyMarkdownRenderer
                         content={displayedContent} // Use smoothed text
                         isLoading={isLoading}
                         onImageClick={onImageClick}
@@ -126,7 +123,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                         t={t}
                         themeId={themeId}
                         onOpenSidePanel={onOpenSidePanel}
-                        hideThinkingInContext={hideThinkingInContext}
+                        hideThinkingInContext={appSettings.hideThinkingInContext}
                         files={message.files}
                     />
                 </div>

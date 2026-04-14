@@ -9,7 +9,7 @@ import { TextEditorModal } from '../../modals/TextEditorModal';
 import { translations } from '../../../utils/appUtils';
 import { CommandInfo, UploadedFile } from '../../../types';
 
-export interface ChatInputModalsProps {
+interface ChatInputModalsProps {
   showRecorder: boolean;
   onAudioRecord: (file: File) => Promise<void>;
   onRecorderCancel: () => void;

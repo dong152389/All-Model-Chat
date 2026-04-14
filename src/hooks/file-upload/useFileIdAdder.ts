@@ -62,9 +62,6 @@ export const useFileIdAdder = ({
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
                 const mimeType = fileMetadata.mimeType ?? 'application/octet-stream';
-                const displayName = fileMetadata.displayName || fileApiId;
-                const fileResourceName = fileMetadata.name || fileApiId;
-                const fileUri = fileMetadata.uri;
                 
                 // Allow known video types or generic octet-stream (often used for arbitrary files)
                 // But strictly validate if it is a supported type if it's not generic
@@ -73,16 +70,16 @@ export const useFileIdAdder = ({
 
                 if (!isValidType) {
                     logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: mimeType });
-                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: displayName, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
+                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
                     return;
                 }
                 const newFile: UploadedFile = { 
                     id: tempId, 
-                    name: displayName, 
+                    name: fileMetadata.displayName || fileApiId, 
                     type: mimeType, 
                     size: Number(fileMetadata.sizeBytes) || 0, 
-                    fileUri, 
-                    fileApiName: fileResourceName, 
+                    fileUri: fileMetadata.uri, 
+                    fileApiName: fileMetadata.name || fileApiId, 
                     isProcessing: fileMetadata.state === 'PROCESSING', 
                     progress: 100, 
                     uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), 

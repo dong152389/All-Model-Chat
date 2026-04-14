@@ -1,18 +1,20 @@
 
-import { useCallback, type MutableRefObject } from 'react';
+
+
+import React, { useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { Part } from '@google/genai';
+import type { Part } from '@google/genai';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 interface ImageEditSenderProps {
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: MutableRefObject<Map<string, AbortController>>;
+    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     setActiveSessionId: (id: string | null) => void;
 }
 
@@ -87,9 +89,30 @@ export const useImageEditSender = ({
                  if (idx !== -1) historyMessages = messages.slice(0, idx);
             }
             
-            const historyForApi = await createChatHistoryForApi(historyMessages, shouldStripThinking);
+            const historyForApi = await createChatHistoryForApi(
+                historyMessages,
+                shouldStripThinking,
+                currentChatSettings.modelId
+            );
             
-            const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, imageSize);
+            const callApi = () => geminiServiceInstance.editImage(
+                keyToUse,
+                currentChatSettings.modelId,
+                historyForApi,
+                promptParts,
+                newAbortController.signal,
+                aspectRatio,
+                imageSize,
+                {
+                    systemInstruction: currentChatSettings.systemInstruction,
+                    showThoughts: currentChatSettings.showThoughts,
+                    thinkingBudget: currentChatSettings.thinkingBudget,
+                    thinkingLevel: currentChatSettings.thinkingLevel,
+                    isGoogleSearchEnabled: !!currentChatSettings.isGoogleSearchEnabled,
+                    isDeepSearchEnabled: !!currentChatSettings.isDeepSearchEnabled,
+                    safetySettings: currentChatSettings.safetySettings,
+                },
+            );
 
             const apiCalls = appSettings.generateQuadImages ? [callApi(), callApi(), callApi(), callApi()] : [callApi()];
             const results = await Promise.allSettled(apiCalls);
@@ -112,11 +135,10 @@ export const useImageEditSender = ({
                         if (part.text) {
                             textPartContent += part.text;
                         } else if (part.inlineData) {
-                            hasImagePart = true;
-                            successfulImageCount++;
                             const { mimeType, data } = part.inlineData;
-                            
                             if (mimeType && data) {
+                                hasImagePart = true;
+                                successfulImageCount++;
                                 const newFile = createUploadedFileFromBase64(data, mimeType, `edited-image-${index + 1}`);
                                 combinedFiles.push(newFile);
                             }

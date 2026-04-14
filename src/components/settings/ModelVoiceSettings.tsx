@@ -10,7 +10,7 @@ import { VoiceControl } from './controls/VoiceControl';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { MediaResolution } from '../../types/settings';
-import { getModelCapabilities, type ThinkingLevel } from '../../platform/genai/modelCatalog';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -18,8 +18,6 @@ interface ModelVoiceSettingsProps {
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
-  generateQuadImages: boolean;
-  setGenerateQuadImages: (value: boolean) => void;
   ttsVoice: string;
   setTtsVoice: (value: string) => void;
   t: (key: string) => string;
@@ -27,8 +25,8 @@ interface ModelVoiceSettingsProps {
   setSystemInstruction: (value: string) => void;
   thinkingBudget: number;
   setThinkingBudget: (value: number) => void;
-  thinkingLevel?: ThinkingLevel;
-  setThinkingLevel?: (value: ThinkingLevel) => void;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   temperature: number;
@@ -46,6 +44,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const {
     modelId, setModelId, availableModels,
     transcriptionModelId, setTranscriptionModelId,
+    ttsVoice, setTtsVoice, 
     systemInstruction, setSystemInstruction,
     thinkingBudget, setThinkingBudget,
     thinkingLevel, setThinkingLevel,
@@ -92,7 +91,9 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const inputBaseClasses = "w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm";
   const isSystemPromptSet = localPrompt && localPrompt.trim() !== "";
   
-  const isNativeAudio = getModelCapabilities(modelId).isNativeAudioModel;
+  const capabilities = getModelCapabilities(modelId);
+  const isNativeAudio = capabilities.isNativeAudioModel;
+  const supportsUltraHighResolution = capabilities.isGemini3;
 
   return (
     <div className="space-y-8">
@@ -220,7 +221,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                         <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
                         {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>}
                         {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>}
-                        {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>}
+                        {!isNativeAudio && supportsUltraHighResolution && <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>}
                     </Select>
                 )}
             </div>
@@ -230,6 +231,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
       <VoiceControl
         transcriptionModelId={transcriptionModelId}
         setTranscriptionModelId={setTranscriptionModelId}
+        ttsVoice={ttsVoice}
+        setTtsVoice={setTtsVoice}
         t={t}
       />
     </div>

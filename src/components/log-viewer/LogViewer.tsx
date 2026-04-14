@@ -68,7 +68,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         const unsubscribe = logService.subscribeToApiKeys(setApiKeyUsage);
         return () => unsubscribe();
     }
-
     return undefined;
   }, [isOpen, appSettings.useCustomApiConfig]);
 
@@ -77,7 +76,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         const unsubscribe = logService.subscribeToTokenUsage(setTokenUsage);
         return () => unsubscribe();
     }
-
     return undefined;
   }, [isOpen]);
 

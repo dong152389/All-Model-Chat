@@ -1,8 +1,5 @@
 import { ChatSettings, MediaResolution } from './settings';
-import { ThemeColors } from './theme';
-import { AppSettings, ModelOption } from './settings';
-import { translations } from '../utils/appUtils';
-import type { Content, Part } from '@google/genai';
+import type { Part } from '@google/genai';
 
 export interface VideoMetadata {
   startOffset?: string;
@@ -15,12 +12,12 @@ export interface UploadedFile {
   name: string; // Original filename
   type: string;
   size: number;
-  
+
   // PRIMARY DATA SOURCE:
-  // A standard Blob or File object. 
+  // A standard Blob or File object.
   // This is stored in IndexedDB and used for API uploads.
   // It should ALWAYS be present for binary files.
-  rawFile?: File | Blob; 
+  rawFile?: File | Blob;
 
   // UI DISPLAY:
   // A temporary `blob:` URL created via URL.createObjectURL(rawFile).
@@ -80,7 +77,6 @@ export interface ChatMessage {
 }
 
 export type ContentPart = Part;
-export type ChatHistoryItem = Content;
 
 export interface ChatGroup {
   id: string;
@@ -114,16 +110,16 @@ export interface SavedScenario {
 }
 
 export interface CommandInfo {
-    name: string;
-    description: string;
-    icon?: string;
+  name: string;
+  description: string;
+  icon?: string;
 }
 
 export interface SideViewContent {
-    type: 'html' | 'mermaid' | 'graphviz' | 'svg';
-    content: string;
-    language?: string;
-    title?: string;
+  type: 'html' | 'mermaid' | 'graphviz' | 'svg';
+  content: string;
+  language?: string;
+  title?: string;
 }
 
 // Toolbar Props Definition
@@ -203,73 +199,3 @@ export interface ChatInputActionsProps {
   onToggleLiveMute?: () => void;
   onFastSendMessage?: () => void;
 }
-
-export interface ChatInputProps {
-  appSettings: AppSettings;
-  currentChatSettings: ChatSettings;
-  setAppFileError: (error: string | null) => void;
-  activeSessionId: string | null;
-  commandedInput: InputCommand | null;
-  onMessageSent: () => void;
-  selectedFiles: UploadedFile[]; 
-  setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
-  onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
-  isLoading: boolean; 
-  isEditing: boolean;
-  onStopGenerating: () => void;
-  onCancelEdit: () => void;
-  onProcessFiles: (files: FileList | File[]) => Promise<void>;
-  onAddFileById: (fileId: string) => Promise<void>;
-  onCancelUpload: (fileId: string) => void;
-  onTranscribeAudio: (file: File) => Promise<string | null>;
-  isProcessingFile: boolean; 
-  fileError: string | null;
-  t: (key: keyof typeof translations) => string;
-  isImagenModel?: boolean;
-  isImageEditModel?: boolean;
-  aspectRatio?: string;
-  setAspectRatio?: (ratio: string) => void;
-  imageSize?: string;
-  setImageSize?: (size: string) => void;
-  isGoogleSearchEnabled: boolean;
-  onToggleGoogleSearch: () => void;
-  isCodeExecutionEnabled: boolean;
-  onToggleCodeExecution: () => void;
-  isLocalPythonEnabled?: boolean;
-  onToggleLocalPython?: () => void;
-  isUrlContextEnabled: boolean;
-  onToggleUrlContext: () => void;
-  isDeepSearchEnabled: boolean;
-  onToggleDeepSearch: () => void;
-  onClearChat: () => void;
-  onNewChat: () => void;
-  onOpenSettings: () => void;
-  onToggleCanvasPrompt: () => void;
-  onTogglePinCurrentSession: () => void;
-  onRetryLastTurn: () => void;
-  onSelectModel: (modelId: string) => void;
-  availableModels: ModelOption[];
-  onEditLastUserMessage: () => void;
-  onTogglePip: () => void;
-  isPipActive?: boolean;
-  isHistorySidebarOpen?: boolean;
-  generateQuadImages: boolean;
-  onToggleQuadImages: () => void;
-  setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
-  onSuggestionClick?: (suggestion: string) => void;
-  onOrganizeInfoClick?: (suggestion: string) => void;
-  showEmptyStateSuggestions?: boolean;
-  editMode: 'update' | 'resend';
-  onUpdateMessageContent: (messageId: string, content: string) => void;
-  editingMessageId: string | null;
-  setEditingMessageId: (id: string | null) => void;
-  onAddUserMessage: (text: string, files?: UploadedFile[]) => void;
-  onLiveTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
-  onToggleBBox?: () => void;
-  isBBoxModeActive?: boolean;
-  onToggleGuide?: () => void;
-  isGuideModeActive?: boolean;
-  themeId: string;
-}
-
-export type { ThemeColors };

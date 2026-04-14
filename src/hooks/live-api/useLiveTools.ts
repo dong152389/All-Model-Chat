@@ -1,17 +1,18 @@
 
 import { useCallback } from 'react';
-import { LiveServerMessage, Session } from '@google/genai';
+import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
+import type { LiveClientFunctions } from '../../types';
 import { logService } from '../../utils/appUtils';
 
 interface UseLiveToolsProps {
-    clientFunctions?: Record<string, (args: any) => Promise<any>>;
-    sessionRef: React.MutableRefObject<Promise<Session> | null>;
+    clientFunctions?: LiveClientFunctions;
+    sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
 }
 
 export const useLiveTools = ({ clientFunctions, sessionRef }: UseLiveToolsProps) => {
     const handleToolCall = useCallback(async (toolCall: NonNullable<LiveServerMessage['toolCall']>) => {
         logService.info("Received Tool Call", toolCall);
-
+        
         const functionCalls = toolCall.functionCalls ?? [];
         if (functionCalls.length > 0) {
             const functionResponses: Array<{
@@ -19,31 +20,32 @@ export const useLiveTools = ({ clientFunctions, sessionRef }: UseLiveToolsProps)
                 name?: string;
                 response: { result?: unknown; error?: string };
             }> = [];
-
+            
             for (const call of functionCalls) {
-                const fn = call.name ? clientFunctions?.[call.name] : undefined;
-                if (fn) {
+                const callName = call.name ?? 'unknown';
+                const clientFunction = clientFunctions?.[callName];
+                if (clientFunction) {
                     try {
-                        const result = await fn(call.args);
+                        const result = await clientFunction.handler(call.args);
                         functionResponses.push({
                             id: call.id,
-                            name: call.name,
+                            name: callName,
                             response: { result: result }
                         });
                     } catch (e: any) {
-                        console.error(`Error executing function ${call.name}`, e);
+                        console.error(`Error executing function ${callName}`, e);
                         functionResponses.push({
                             id: call.id,
-                            name: call.name,
+                            name: callName,
                             response: { error: e.message }
                         });
                     }
                 } else {
-                    console.warn(`Function ${call.name || 'unknown'} not found in client registry.`);
+                    console.warn(`Function ${callName} not found in client registry.`);
                     functionResponses.push({
                         id: call.id,
-                        name: call.name,
-                        response: { error: `Function ${call.name || 'unknown'} not implemented client-side.` }
+                        name: callName,
+                        response: { error: `Function ${callName} not implemented client-side.` }
                     });
                 }
             }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, RefObject } from 'react';
 import { useWindowContext } from '../../contexts/WindowContext';
-import { sanitizeFilename, exportElementAsPng, triggerDownload } from '../../utils/exportUtils';
+import { sanitizeFilename, triggerDownload } from '../../utils/export/core';
 import { useFullscreen } from './useFullscreen';
 
 const ZOOM_STEP = 0.1;
@@ -14,6 +14,10 @@ interface UseHtmlPreviewModalProps {
     initialTrueFullscreenRequest?: boolean;
     iframeRef: RefObject<HTMLIFrameElement>;
 }
+
+type DocumentWithWebkitFullscreen = Document & {
+    webkitFullscreenElement?: Element | null;
+};
 
 export const useHtmlPreviewModal = ({
     isOpen,
@@ -41,7 +45,6 @@ export const useHtmlPreviewModal = ({
             const timer = setTimeout(() => setIsActuallyOpen(false), 300);
             return () => clearTimeout(timer);
         }
-
         return undefined;
     }, [isOpen, initialTrueFullscreenRequest]);
 
@@ -53,7 +56,7 @@ export const useHtmlPreviewModal = ({
         if (!element) return;
         try {
             await enterFullscreen(element);
-        } catch (err) {
+        } catch {
             setIsDirectFullscreenLaunch(false);
         }
     }, [iframeRef, enterFullscreen]);
@@ -64,7 +67,7 @@ export const useHtmlPreviewModal = ({
 
     useEffect(() => {
         const handleFullscreenChange = () => {
-            const newlyFullscreenElement = targetDocument.fullscreenElement || (targetDocument as any).webkitFullscreenElement;
+            const newlyFullscreenElement = targetDocument.fullscreenElement || (targetDocument as DocumentWithWebkitFullscreen).webkitFullscreenElement;
             const isNowInTrueFullscreenForIframe = newlyFullscreenElement === iframeRef.current;
 
             if (isTrueFullscreen && !isNowInTrueFullscreenForIframe) {
@@ -114,7 +117,9 @@ export const useHtmlPreviewModal = ({
             if (titleMatch && titleMatch[1]) {
                 title = titleMatch[1].trim();
             }
-        } catch (e) { }
+        } catch {
+            // Fall back to the default preview title if parsing fails.
+        }
         return title;
     }, [htmlContent]);
 
@@ -132,6 +137,7 @@ export const useHtmlPreviewModal = ({
         
         setIsScreenshotting(true);
         try {
+            const { exportElementAsPng } = await import('../../utils/export/image');
             const elementToCapture = iframeRef.current.contentDocument.documentElement;
             const title = getPreviewTitle();
             const filename = `${sanitizeFilename(title)}-screenshot.png`;

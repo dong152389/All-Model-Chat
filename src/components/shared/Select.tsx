@@ -3,12 +3,6 @@ import React, { useState, useRef, useMemo } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { useClickOutside } from '../../hooks/useClickOutside';
 
-interface SelectOption {
-  value: string;
-  label: React.ReactNode;
-  disabled?: boolean;
-}
-
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label: string;
   children: React.ReactNode;
@@ -20,6 +14,12 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   dropdownClassName?: string;
   direction?: 'up' | 'down';
 }
+
+type SelectOption = {
+    value: string;
+    label: React.ReactNode;
+    disabled: boolean | undefined;
+};
 
 export const Select: React.FC<SelectProps> = ({ 
     id, 
@@ -43,20 +43,17 @@ export const Select: React.FC<SelectProps> = ({
     useClickOutside(wrapperRef, () => setIsOpen(false), isOpen);
 
     const options = useMemo<SelectOption[]>(() => {
-        const collectedOptions: SelectOption[] = [];
-
-        React.Children.forEach(children, (child) => {
+        return React.Children.toArray(children).flatMap((child) => {
             if (React.isValidElement(child) && child.type === 'option') {
                 const props = child.props as React.OptionHTMLAttributes<HTMLOptionElement>;
-                collectedOptions.push({
+                return [{
                     value: String(props.value),
                     label: props.children,
                     disabled: props.disabled
-                });
+                }];
             }
+            return [];
         });
-
-        return collectedOptions;
     }, [children]);
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));

@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { UploadedFile, SavedChatSession, ChatSettings, ModelOption, ChatMessage } from '../../types';
+import { UploadedFile, SavedChatSession, ChatSettings, ModelOption } from '../../types';
 import { logService, cleanupFilePreviewUrls } from '../../utils/appUtils';
 
 interface UseChatEffectsProps {
@@ -21,7 +21,6 @@ interface UseChatEffectsProps {
     loadInitialData: () => Promise<void>;
     loadChatSession: (id: string) => void;
     startNewChat: () => void;
-    messages: ChatMessage[];
 }
 
 export const useChatEffects = ({
@@ -41,8 +40,7 @@ export const useChatEffects = ({
     setAspectRatio,
     loadInitialData,
     loadChatSession,
-    startNewChat,
-    messages: _messages
+    startNewChat
 }: UseChatEffectsProps) => {
 
     // 1. Initial Data Load
@@ -124,7 +122,6 @@ export const useChatEffects = ({
             const timer = setTimeout(() => setIsSwitchingModel(false), 0); 
             return () => clearTimeout(timer); 
         } 
-
         return undefined;
     }, [isSwitchingModel, setIsSwitchingModel]);
 

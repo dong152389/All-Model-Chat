@@ -1,4 +1,3 @@
-
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything...', zh: '询问任何问题' },

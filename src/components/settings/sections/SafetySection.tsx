@@ -44,7 +44,6 @@ const thresholdLabels: Record<HarmBlockThreshold, string> = {
   [HarmBlockThreshold.BLOCK_LOW_AND_ABOVE]: 'safety_threshold_BLOCK_LOW_AND_ABOVE',
 };
 
-// Colors for the slider track/label based on index
 const stepTextColors = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-blue-500', 'text-green-500'];
 
 type SliderValueMap = Record<HarmCategory, number>;

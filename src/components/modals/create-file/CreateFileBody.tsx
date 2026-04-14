@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { MarkdownRenderer } from '../../message/MarkdownRenderer';
+import React, { Suspense, lazy, useState } from 'react';
+import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
 import { translations } from '../../../utils/appUtils';
 
 interface CreateFileBodyProps {
@@ -9,6 +9,8 @@ interface CreateFileBodyProps {
     debouncedContent: string;
     textareaRef: React.RefObject<HTMLTextAreaElement>;
     printRef: React.RefObject<HTMLDivElement>;
+    isPdf: boolean;
+    setIsPdfPreviewReady: (ready: boolean) => void;
     isPreviewMode: boolean;
     supportsRichPreview: boolean;
     handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
@@ -17,12 +19,19 @@ interface CreateFileBodyProps {
     t: (key: keyof typeof translations | string) => string;
 }
 
+const PdfExportSurface = lazy(async () => {
+    const module = await import('./CreateFilePdfExportSurface');
+    return { default: module.CreateFilePdfExportSurface };
+});
+
 export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
     textContent,
     setTextContent,
     debouncedContent,
     textareaRef,
     printRef,
+    isPdf,
+    setIsPdfPreviewReady,
     isPreviewMode,
     supportsRichPreview,
     handlePaste,
@@ -100,12 +109,11 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                     `}>
                       <div className="absolute inset-0 w-full h-full overflow-auto custom-scrollbar">
                           <div 
-                            ref={printRef}
                             className="w-full min-h-full bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] p-4 sm:p-6 transition-colors duration-300"
                             style={{ fontSize: '16px' }}
                           >
                               <div className="markdown-body">
-                                  <MarkdownRenderer 
+                                  <LazyMarkdownRenderer 
                                       content={debouncedContent || '*Start typing...*'}
                                       isLoading={false}
                                       onImageClick={() => {}}
@@ -117,6 +125,7 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                                       allowHtml={true}
                                       t={t as any}
                                       themeId={themeId}
+                                      fallbackMode="raw"
                                   />
                               </div>
                               <div className="mt-8 pt-4 border-t border-[var(--theme-border-secondary)] text-center text-xs text-[var(--theme-text-tertiary)] hidden print:block">
@@ -127,6 +136,17 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                     </div>
                 )}
             </div>
+            {isPdf && (
+                <Suspense fallback={null}>
+                    <PdfExportSurface
+                        content={debouncedContent || '*Start typing...*'}
+                        printRef={printRef}
+                        themeId={themeId}
+                        t={t}
+                        setIsPdfPreviewReady={setIsPdfPreviewReady}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };
